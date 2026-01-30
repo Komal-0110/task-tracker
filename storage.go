@@ -28,3 +28,12 @@ func loadTasks() ([]Task, error) {
 
 	return task, nil
 }
+
+func saveTasks(tasks []Task) error {
+	data, err := json.MarshalIndent(tasks, "", " ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(fileName, data, 0644)
+}

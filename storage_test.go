@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -97,6 +98,64 @@ func Test_loadTasks(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.wantTasks, gotTasks, "expect tasks to match")
+		})
+	}
+}
+
+func Test_saveTasks(t *testing.T) {
+	now := time.Now().UTC()
+
+	tests := []struct {
+		name  string
+		tasks []Task
+	}{
+		{
+			name:  "add empty list of task :POS",
+			tasks: []Task{},
+		},
+		{
+			name: "add list of tasks :POS",
+			tasks: []Task{
+				{
+					Id:          1,
+					Description: "this is dummy task",
+					Status:      TODO,
+					CreatedAt:   now,
+					UpdatedAt:   now,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+
+			wd, err := os.Getwd()
+			if err != nil {
+				t.Fatalf("failed to get wd: %v", err)
+			}
+			defer os.Chdir(wd)
+
+			if err := os.Chdir(tempDir); err != nil {
+				t.Fatalf("failed to chdir: %v", err)
+			}
+
+			gotErr := saveTasks(tt.tasks)
+
+			assert.NoError(t, gotErr)
+
+			content, err := os.ReadFile("tasks.json")
+			if err != nil {
+				t.Error("failed to get content of tasks.json", err)
+			}
+
+			var got []Task
+			if err := json.Unmarshal(content, &got); err != nil {
+				t.Error("failed to unmarshal content", err)
+			}
+
+			assert.Equal(t, tt.tasks, got, "expect task list to match")
 		})
 	}
 }
